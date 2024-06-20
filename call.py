@@ -3,6 +3,8 @@ from flask_cors import CORS, cross_origin
 from twilio.rest import Client
 import mysql.connector
 
+print ("Hello World")
+
 app = Flask(__name__)
 CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
@@ -201,4 +203,3 @@ if __name__ == '__main__':
 # GET /user_devices/<int:user_id>
 # POST /trigger_alarm
 # POST /deactivate_alarm
-
