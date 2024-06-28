@@ -3,19 +3,17 @@ from flask_cors import CORS, cross_origin
 from twilio.rest import Client
 import mysql.connector
 
-print ("Hello World")
-
 app = Flask(__name__)
 CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
 
 # Create a Blueprint for the API
-api = Blueprint('api', __name__, url_prefix='/api')
+api = Blueprint('api', __name__)
 
 # Twilio configuration
-TWILIO_ACCOUNT_SID = 'your_account_sid'
-TWILIO_AUTH_TOKEN = 'your_auth_token'
-TWILIO_PHONE_NUMBER = 'your_twilio_phone_number'
+TWILIO_ACCOUNT_SID = ''
+TWILIO_AUTH_TOKEN = ''
+TWILIO_PHONE_NUMBER = '+18062305557'
 client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 
 # Database connection
@@ -26,14 +24,13 @@ db = mysql.connector.connect(
     database="acs"
 )
 
-
 # generate sample data
 def generate_sample_data():
     cursor = db.cursor()
     cursor.execute("SELECT * FROM users")
     users = cursor.fetchall()
     if not users:
-        cursor.execute("""INSERT INTO users (name, phone_number) VALUES ('John Doe', '1234567890')""")
+        cursor.execute("""INSERT INTO users (name, phone_number) VALUES ('Timothy Ntambi', '0770938418')""")
         cursor.execute("""INSERT INTO users (name, phone_number) VALUES ('Jane Doe', '0987654321')""")
         cursor.execute("""INSERT INTO users (name, phone_number) VALUES ('Alice Doe', '1230984567')""")
         db.commit()
@@ -74,7 +71,6 @@ def hello():
 
 
 @app.route('/register_user', methods=['POST'])
-@cross_origin()
 def register_user():
     data = request.get_json()
     name = data['name']
@@ -85,7 +81,6 @@ def register_user():
     return jsonify({"message": "User registered successfully"}), 201
 
 @app.route('/register_device', methods=['POST'])
-@cross_origin()
 def register_device():
     data = request.get_json()
     user_id = data['user_id']
@@ -96,7 +91,6 @@ def register_device():
     return jsonify({"message": "Device registered successfully"}), 201
 
 @app.route('/users', methods=['GET'])
-@cross_origin()
 def get_users():
     cursor = db.cursor()
     cursor.execute("SELECT * FROM users")
@@ -112,7 +106,6 @@ def get_users():
     return jsonify(user_list), 200
 
 @app.route('/user_devices/<int:user_id>', methods=['GET'])
-@cross_origin()
 def get_user_devices(user_id):
     cursor = db.cursor()
     cursor.execute("""SELECT * FROM devices WHERE user_id=%s""", (user_id,))
@@ -127,7 +120,6 @@ def get_user_devices(user_id):
     return jsonify(device_list), 200
 
 @app.route('/trigger_alarm', methods=['POST'])
-@cross_origin()
 def trigger_alarm():
     # Check if request is JSON
     if request.is_json:
@@ -152,7 +144,6 @@ def trigger_alarm():
     return jsonify({"message": "User not found"}), 404
 
 @app.route('/deactivate_alarm', methods=['POST'])
-@cross_origin()
 def deactivate_alarm():
     data = request.get_json()
     phone_number = data.get('phone_number')
@@ -176,8 +167,6 @@ def send_notifications(phone_number, message):
             from_=TWILIO_PHONE_NUMBER,
             to=user[0]
         )
-# Register the blueprint with the app
-app.register_blueprint(api)
 
 
 def beep_phones():
@@ -191,15 +180,66 @@ def beep_phones():
             from_=TWILIO_PHONE_NUMBER
         )
 
+@api.route('/send_sms', methods=['POST'])
+def send_sms():
+    # Extract message and recipient number from the request
+    data = request.json
+    message_body = data.get('message')
+    recipient = data.get('to')
+
+    # +25675551212 format 
+    #add country code to phone number
+    # recipient = '+2560' + recipient[1:]
+    # recipient ='+256770938418'
+    recipient ='+256770938418'
+    # 0760444927
+    # Use the Twilio client to send an SMS
+    message = client.messages.create(
+        from_=TWILIO_PHONE_NUMBER,
+        body=message_body,
+        to=recipient
+    )
+
+       
+    # Return a success response
+    return jsonify({'message': message_body,
+                    'phone_number': recipient,
+                    'sid': message.sid}), 200
+
+# Register the Blueprint with the Flask application
+app.register_blueprint(api)
+
+
+
+# CREATE TABLE users (
+#     id INT AUTO_INCREMENT PRIMARY KEY,
+#     phone_number VARCHAR(15) NOT NULL,
+#     name VARCHAR(50)
+# );
+
+# CREATE TABLE devices (
+#     id INT AUTO_INCREMENT PRIMARY KEY,
+#     user_id INT,
+#     device_id VARCHAR(50),
+#     FOREIGN KEY (user_id) REFERENCES users(id)
+# );
+
+# CREATE TABLE alarms (
+#     id INT AUTO_INCREMENT PRIMARY KEY,
+#     user_id INT,
+#     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+#     status ENUM('triggered', 'deactivated'),
+#     FOREIGN KEY (user_id) REFERENCES users(id)
+# );
+
+# CREATE TABLE logs (
+#     id INT AUTO_INCREMENT PRIMARY KEY,
+#     event_type VARCHAR(50),
+#     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+#     details TEXT
+# );
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-
-# all routes
-# POST /register_user
-# POST /register_device
-# GET /users
-# GET /user_devices/<int:user_id>
-# POST /trigger_alarm
-# POST /deactivate_alarm

@@ -6,7 +6,9 @@ import { OverlayToaster } from "@blueprintjs/core";
 ReactDOM.createRoot(document.getElementById("root")!).render(
   // <React.StrictMode>
   <>
-    <OverlayToaster></OverlayToaster>,
+    <div className="toaster-container">
+      <OverlayToaster></OverlayToaster>,
+    </div>
     <App />
   </>
   // </React.StrictMode>

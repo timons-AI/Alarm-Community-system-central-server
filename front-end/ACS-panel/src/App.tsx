@@ -13,6 +13,7 @@ import {
   Toaster,
   CompoundTag,
   Tag,
+  H1,
 } from "@blueprintjs/core";
 import { Card, CardList } from "@blueprintjs/core";
 
@@ -143,12 +144,34 @@ function App() {
     }
   };
 
+  // send sms
+
+  const [sms, setSms] = useState<string>("");
+  const [phone_number, setPhone_number] = useState<string>("");
+
+  // # Return a success response
+  // return jsonify({'message': 'SMS sent successfully', 'sid': message.sid})
+  // +16175551212
+
+  const handleSendSms = async () => {
+    try {
+      const response = await axios.post("http://localhost:5000/send_sms", {
+        message: sms,
+        to: phone_number,
+      });
+      console.log(response.data);
+      showToast("SMS sent successfully.", "success");
+    } catch (error) {
+      showToast("Failed to send SMS.", "danger");
+    }
+  };
+
   return (
-    <div className="">
-      <h1 className=" text-4xl">Alarm Community System</h1>
+    <div className=" bg-black grid grid-cols-1 gap-1 p-2 md:grid-cols-2 lg:grid-cols-3">
+      {/* <h1 className=" text-4xl">Alarm Community System</h1>
       <div>
         <Button onClick={TestButton}>Test Button</Button>
-      </div>
+      </div> */}
       <Section
         className="sample-class"
         // collapseProps={/* sample collapseProps */}
@@ -194,6 +217,39 @@ function App() {
         // collapseProps={/* sample collapseProps */}
         collapsible={false}
         compact={false}
+        elevation={Elevation.ZERO}
+        icon="phone"
+        // rightElement={/* sample rightElement */}
+        subtitle="Send SMS to a test phone number "
+        title="Send SMS"
+        // titleRenderer={/* sample titleRenderer */}
+      >
+        <SectionCard>
+          <h2>Send SMS</h2>
+          <FormGroup label="Phone Number">
+            <NumericInput
+              placeholder="Phone Number"
+              value={phone_number}
+              onChange={(e: any) => setPhone_number(e.target.value)}
+            />
+          </FormGroup>
+          <FormGroup label="Message">
+            <InputGroup
+              type="text"
+              placeholder="Message"
+              value={sms}
+              onChange={(e: any) => setSms(e.target.value)}
+            />
+          </FormGroup>
+          <Button onClick={handleSendSms}>Send SMS</Button>
+        </SectionCard>
+      </Section>
+
+      <Section
+        className="sample-class row-span-2"
+        // collapseProps={/* sample collapseProps */}
+        collapsible={false}
+        compact={false}
         elevation={Elevation.ONE}
         icon="satellite"
         // rightElement={/* sample rightElement */}
@@ -226,6 +282,7 @@ function App() {
           <Button onClick={handleRegisterDevice}>Register Device</Button>
         </SectionCard>
       </Section>
+
       <Section
         className="sample-class"
         // collapseProps={/* sample collapseProps */}
@@ -265,8 +322,18 @@ function App() {
       </Section>
 
       <div>
-        <h2>Users and Their Devices</h2>
-        <CardList>
+        <Section
+          className="sample-class h-full"
+          // collapseProps={/* sample collapseProps */}
+          collapsible={false}
+          compact={false}
+          elevation={Elevation.ZERO}
+          icon="user"
+          // rightElement={/* sample rightElement */}
+          subtitle="List of users registerd for this community "
+          title="Users"
+          // titleRenderer={/* sample titleRenderer */}
+        >
           {users.map((user) => (
             <SectionCard key={user.id}>
               <CompoundTag
@@ -281,15 +348,15 @@ function App() {
                 {user.name}
               </CompoundTag>
 
-              <Button onClick={() => handleFetchUserDevices(user.id)}>
+              {/* <Button onClick={() => handleFetchUserDevices(user.id)}>
                 Fetch Devices
-              </Button>
+              </Button> */}
               {userDevices[user.id]?.map((device) => (
                 <Tag key={device.id}>{device.device_id}</Tag>
               ))}
             </SectionCard>
           ))}
-        </CardList>
+        </Section>
       </div>
     </div>
   );
